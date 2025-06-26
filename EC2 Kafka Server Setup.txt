@@ -1,48 +1,94 @@
-Setup Kafka server on your EC2 server.
-------------------------------
-wget https://downloads.apache.org/kafka/3.3.1/kafka_2.12-3.3.1.tgz
+Kafka Setup on AWS EC2 (Single Node)
+-------------------------------------
+
+This guide will help you install and run Kafka on your EC2 instance, create a topic, and test streaming data using producer and consumer terminals.
+
+-------------------------------------
+1. Download and Extract Kafka
+-------------------------------------
+wget https://archive.apache.org/dist/kafka/3.3.1/kafka_2.12-3.3.1.tgz
 tar -xvf kafka_2.12-3.3.1.tgz
 
+-------------------------------------
+2. Install Java (Required for Kafka)
+-------------------------------------
+Check Java version:
+java -version
 
------------------------
+Install Java if needed:
+sudo yum install java-1.8.0-openjdk -y
 java -version
-sudo yum install java-1.8.0-openjdk
-java -version
+
+-------------------------------------
+3. Start Kafka Components
+-------------------------------------
+Navigate to the Kafka directory:
 cd kafka_2.12-3.3.1
 
-Start Zoo-keeper:
--------------------------------
+Start ZooKeeper (in terminal 1):
 bin/zookeeper-server-start.sh config/zookeeper.properties
 
-Open another window to start kafka
-But first ssh to to your ec2 machine as done above
-
-
-Start Kafka-server:
-----------------------------------------
-Duplicate the session & enter in a new console --
-export KAFKA_HEAP_OPTS="-Xmx256M -Xms128M"
+Start Kafka Broker (in terminal 2):
 cd kafka_2.12-3.3.1
+export KAFKA_HEAP_OPTS="-Xmx256M -Xms128M"
 bin/kafka-server-start.sh config/server.properties
 
-It is pointing to private server , change server.properties so that it can run in public IP 
+-------------------------------------
+4. Enable Public Access to Kafka
+-------------------------------------
+Kafka by default listens on localhost. To allow external connections:
 
-To do this , you can follow any of the 2 approaches shared belwo --
-Do a "sudo nano config/server.properties" - change ADVERTISED_LISTENERS to public ip of the EC2 instance
+Edit the Kafka config file:
+nano config/server.properties
 
+Update the following lines:
+advertised.listeners=PLAINTEXT://<YOUR_EC2_PUBLIC_IP>:9092
+listeners=PLAINTEXT://0.0.0.0:9092
 
-Create the topic:
------------------------------
-Duplicate the session & enter in a new console --
+Save and restart Kafka for the changes to take effect.
+
+-------------------------------------
+5. Create a Kafka Topic
+-------------------------------------
+In a new EC2 session:
 cd kafka_2.12-3.3.1
-bin/kafka-topics.sh --create --topic stock_market --bootstrap-server {Enter Public IP of your Kafka Server}:9092 --replication-factor 1 --partitions 1
 
-Start Producer:
---------------------------
-bin/kafka-console-producer.sh --topic stock_market --bootstrap-server {Enter Public IP of your Kafka Server}:9092 
+bin/kafka-topics.sh --create \
+--topic stock_market \
+--bootstrap-server <YOUR_EC2_PUBLIC_IP>:9092 \
+--replication-factor 1 \
+--partitions 1
 
-Start Consumer:
--------------------------
-Duplicate the session & enter in a new console --
+-------------------------------------
+6. Start Kafka Producer
+-------------------------------------
+bin/kafka-console-producer.sh \
+--topic stock_market \
+--bootstrap-server <YOUR_EC2_PUBLIC_IP>:9092
+
+(Type messages and hit Enter to send them to the topic.)
+
+-------------------------------------
+7. Start Kafka Consumer (in another terminal)
+-------------------------------------
 cd kafka_2.12-3.3.1
-bin/kafka-console-consumer.sh --topic stock_market --bootstrap-server {Enter Public IP of your Kafka Server}:9092
+
+bin/kafka-console-consumer.sh \
+--topic stock_market \
+--bootstrap-server <YOUR_EC2_PUBLIC_IP>:9092 \
+--from-beginning
+
+(You will now see all messages received on the topic.)
+
+-------------------------------------
+8. Optional: Stop Kafka and ZooKeeper
+-------------------------------------
+bin/kafka-server-stop.sh
+bin/zookeeper-server-stop.sh
+
+-------------------------------------
+Additional Tips
+-------------------------------------
+- Ensure port 9092 is open in your EC2 security group
+- Use Elastic IP for a static public IP address
+- Consider using tmux or nohup to keep services running in the background
