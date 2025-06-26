@@ -37,12 +37,4 @@ This project is an end-to-end stock market data analysis pipeline built using Ka
 - 📈 Closing Price Trend Over Time
 - 🏷️ Index Comparison by
 
-## 📂 Repository Structure
 
-├── data/                      # Sample data files (optional)
-├── assets/                   # Dashboard screenshots
-├── dashboard/Stock_Market_Dashboard.pbix  # Power BI file
-├── producer/producer.py      # Kafka producer script
-├── consumer/consumer.py      # Kafka consumer script to S3
-├── .gitignore
-└── README.md
